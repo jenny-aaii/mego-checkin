@@ -237,7 +237,7 @@ select, input[type="text"], input[type="time"] {
 table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 640px;
+  min-width: 760px;
   font-size: 0.85rem;
 }
 
@@ -265,7 +265,7 @@ tr.leave-row td {
 }
 
 td input[type="time"] {
-  width: 100px;
+  width: 145px;
 }
 
 td select.leave-select {
