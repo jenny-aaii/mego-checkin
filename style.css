@@ -43,6 +43,44 @@ body {
   color: var(--color-text-soft);
 }
 
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.login-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+}
+
+.login-card h1 {
+  font-size: 1.2rem;
+  margin: 0 0 6px;
+}
+
+.login-card .btn-primary {
+  margin-top: 20px;
+  width: 100%;
+}
+
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
@@ -99,6 +137,21 @@ select, input[type="text"], input[type="time"] {
   align-items: center;
   justify-content: center;
   gap: 12px;
+}
+
+.period-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.period-row input[type="date"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.period-sep {
+  color: var(--color-text-soft);
 }
 
 .month-label {
@@ -327,20 +380,43 @@ td input.note-input {
     width: 100%;
     padding: 20px;
     font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-    color: #000;
+    color: var(--color-text);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   #printTitle {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    font-weight: 700;
     text-align: center;
-    margin: 0 0 8px;
+    color: var(--color-primary);
+    margin: 0 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-primary);
   }
-  .print-meta, .print-summary {
+  .print-meta {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 10px 24px;
+    gap: 8px 20px;
     font-size: 0.9rem;
-    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 10px;
+  }
+  .print-summary {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .print-summary span {
+    background: var(--color-accent-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: var(--color-text);
   }
   #printTable {
     width: 100%;
@@ -349,14 +425,24 @@ td input.note-input {
     font-size: 0.75rem;
   }
   #printTable th, #printTable td {
-    border: 1px solid #999;
-    padding: 4px;
+    border: 1px solid var(--color-border);
+    padding: 5px 4px;
     text-align: center;
+  }
+  #printTable th {
+    background: var(--color-accent-bg);
+    color: var(--color-text-soft);
+    font-weight: 700;
+  }
+  #printTable tr.leave-row td {
+    background: var(--color-accent-bg);
+    color: var(--color-text-soft);
   }
   .print-leave-stats {
     margin-top: 10px;
     font-size: 0.85rem;
     text-align: center;
+    color: var(--color-text-soft);
   }
   .print-signatures {
     display: flex;
@@ -371,17 +457,19 @@ td input.note-input {
   .sig-label {
     display: block;
     font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
     margin-bottom: 4px;
   }
   .sig-name {
     display: block;
     font-size: 0.8rem;
-    color: #333;
+    color: var(--color-text-soft);
     margin-bottom: 26px;
     min-height: 1em;
   }
   .sig-line {
     display: block;
-    border-top: 1px solid #000;
+    border-top: 1px solid var(--color-text);
   }
 }

@@ -4,24 +4,34 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>米果計畫｜實習生打卡時數表</title>
-<link rel="stylesheet" href="style.css?v=3" />
+<link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
 
-<div class="app">
+<!-- 登入畫面 -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h1>米果計畫｜實習生打卡時數表</h1>
+    <p class="subtitle">MEVOLUTION GO 2026 實習生計畫</p>
+    <button id="googleLoginBtn" class="btn-primary" type="button">使用 Google 帳號登入</button>
+    <p id="loginError" class="notice hidden"></p>
+  </div>
+</div>
+
+<div class="app hidden" id="appRoot">
 
   <header class="topbar">
     <h1>米果計畫｜實習生打卡時數表</h1>
-    <p class="subtitle">MEVOLUTION GO 2026 實習生計畫（Demo 版本）</p>
+    <div class="user-bar">
+      <span id="userBadge"></span>
+      <button id="logoutBtn" class="btn-secondary" type="button">登出</button>
+    </div>
   </header>
 
   <section class="card selector-card">
-    <div class="field-group">
-      <label for="nameSelect">姓名</label>
-      <div class="name-row">
-        <select id="nameSelect"></select>
-        <button id="addNameBtn" class="btn-secondary" type="button">新增</button>
-      </div>
+    <div class="field-group hidden" id="internSelectGroup">
+      <label for="internSelect">實習生</label>
+      <select id="internSelect"></select>
     </div>
 
     <div class="field-group">
@@ -30,6 +40,15 @@
         <button id="prevMonthBtn" class="btn-icon" type="button" aria-label="上個月">‹</button>
         <span id="monthLabel" class="month-label"></span>
         <button id="nextMonthBtn" class="btn-icon" type="button" aria-label="下個月">›</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>本期區間（預設上月25號~本月24號，可個別調整）</label>
+      <div class="period-row">
+        <input type="date" id="periodStartInput" />
+        <span class="period-sep">~</span>
+        <input type="date" id="periodEndInput" />
       </div>
     </div>
 
@@ -139,6 +158,9 @@
   </div>
 </div>
 
-<script src="app.js?v=3"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
