@@ -239,6 +239,10 @@ body {
   padding: 8px 10px;
 }
 
+.add-intern-row #newInternEmail {
+  flex: 1.8;
+}
+
 .add-intern-row .btn-primary {
   flex: none;
   width: auto;
