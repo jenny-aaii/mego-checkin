@@ -374,9 +374,14 @@
       var row = document.createElement("div");
       row.className = "intern-manage-row";
 
+      var avatar = document.createElement("span");
+      avatar.className = "intern-avatar";
+      avatar.textContent = i.name.charAt(0);
+
       var info = document.createElement("div");
       info.className = "intern-info";
       var nameSpan = document.createElement("span");
+      nameSpan.className = "intern-name";
       nameSpan.textContent = i.name;
       var emailSpan = document.createElement("span");
       emailSpan.className = "intern-email";
@@ -387,7 +392,9 @@
       var delBtn = document.createElement("button");
       delBtn.className = "btn-danger";
       delBtn.type = "button";
-      delBtn.textContent = "刪除";
+      delBtn.title = "刪除";
+      delBtn.setAttribute("aria-label", "刪除" + i.name);
+      delBtn.textContent = "×";
       delBtn.addEventListener("click", function () {
         if (!window.confirm("確定要刪除「" + i.name + "」的登入權限嗎？（已產生的打卡紀錄不會被刪除）")) return;
         db.collection("checkinUsers").doc(i.email).delete().then(function () {
@@ -404,6 +411,7 @@
         });
       });
 
+      row.appendChild(avatar);
       row.appendChild(info);
       row.appendChild(delBtn);
       internListManage.appendChild(row);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>米果計畫｜實習生打卡時數表</title>
-<link rel="stylesheet" href="style.css?v=9" />
+<link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
 
@@ -131,10 +131,13 @@
     </div>
     <p class="notice-inline">刪除只會移除登入白名單，不會刪除該實習生已產生的打卡紀錄。</p>
     <div id="internListManage" class="intern-manage-list"></div>
-    <div class="add-intern-row">
-      <input type="text" id="newInternName" placeholder="姓名" />
-      <input type="email" id="newInternEmail" placeholder="Google 帳號 email" />
-      <button id="addInternBtn" class="btn-primary" type="button">新增</button>
+    <div class="add-intern-card">
+      <h3>＋ 新增實習生</h3>
+      <div class="add-intern-row">
+        <input type="text" id="newInternName" placeholder="姓名" />
+        <input type="email" id="newInternEmail" placeholder="Google 帳號 email" />
+        <button id="addInternBtn" class="btn-primary" type="button">新增</button>
+      </div>
     </div>
   </div>
 </div>
@@ -177,6 +180,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
