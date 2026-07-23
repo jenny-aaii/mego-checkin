@@ -226,17 +226,34 @@ body {
 
 .add-intern-row {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .add-intern-row input {
-  width: 100%;
+  flex: 1;
+  min-width: 110px;
   background: #fff;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  padding: 8px 10px;
 }
 
 .add-intern-row .btn-primary {
-  width: 100%;
+  flex: none;
+  width: auto;
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 420px) {
+  .add-intern-row input {
+    flex-basis: 100%;
+  }
+  .add-intern-row .btn-primary {
+    flex: 1;
+  }
 }
 
 .card {
