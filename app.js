@@ -542,10 +542,6 @@
       tdLeave.appendChild(buildLeaveSelect(dateStr, rec.leaveType));
       tr.appendChild(tdLeave);
 
-      var tdLunch = document.createElement("td");
-      tdLunch.textContent = calc.lunch === null ? "-" : calc.lunch + " 小時";
-      tr.appendChild(tdLunch);
-
       var tdHours = document.createElement("td");
       if (calc.error) {
         tdHours.textContent = "時間錯誤";
@@ -630,7 +626,6 @@
         weekday,
         rec.clockIn || "-",
         rec.clockOut || "-",
-        calc.lunch === null ? "-" : calc.lunch + " 小時",
         calc.hours === null ? "-" : calc.hours.toFixed(2),
         rec.leaveType || "-",
         rec.note || ""
