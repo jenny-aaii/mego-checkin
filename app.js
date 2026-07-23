@@ -1,6 +1,11 @@
 (function () {
   "use strict";
 
+  // TEMP: while true, clock in/out buttons stay clickable even after already
+  // used today, so testing isn't blocked. Set back to true to re-lock once
+  // testing is done.
+  var LOCK_AFTER_CLOCK = false;
+
   var LEAVE_TYPES = ["病假", "事假", "公假", "其他"];
   var WEEKDAY_CHARS = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -14,7 +19,8 @@
     year: 0,
     month: 0, // 1-12
     records: {}, // dateStr -> {clockIn, clockOut, leaveType, note}
-    supervisorName: "" // varies by month: HR supervisor at first, then per-BU supervisor later
+    supervisorName: "", // varies by month: HR supervisor at first, then per-BU supervisor later
+    buName: "" // e.g. "MESH+ / 媒體傳播部", set once assigned to a BU
   };
 
   var today = new Date();
@@ -43,6 +49,10 @@
     return "mius_supervisor_" + name + "_" + yyyyMM(year, month);
   }
 
+  function buKey(name, year, month) {
+    return "mius_bu_" + name + "_" + yyyyMM(year, month);
+  }
+
   function loadNames() {
     try {
       return JSON.parse(localStorage.getItem(NAMES_KEY) || "[]");
@@ -68,13 +78,42 @@
     localStorage.setItem(recordsKey(state.name, state.year, state.month), JSON.stringify(state.records));
   }
 
+  // Looks back up to 24 months for the most recent saved value, and carries it
+  // forward into the requested month — BU/supervisor rarely change monthly,
+  // so interns shouldn't have to retype them every month.
+  function loadWithCarryForward(keyFn, name, year, month) {
+    var direct = localStorage.getItem(keyFn(name, year, month));
+    if (direct) return direct;
+
+    var y = year, m = month;
+    for (var i = 0; i < 24; i++) {
+      m -= 1;
+      if (m < 1) { m = 12; y -= 1; }
+      var prev = localStorage.getItem(keyFn(name, y, m));
+      if (prev) {
+        localStorage.setItem(keyFn(name, year, month), prev);
+        return prev;
+      }
+    }
+    return "";
+  }
+
   function loadSupervisor(name, year, month) {
-    return localStorage.getItem(supervisorKey(name, year, month)) || "";
+    return loadWithCarryForward(supervisorKey, name, year, month);
   }
 
   function saveSupervisor() {
     if (!state.name) return;
     localStorage.setItem(supervisorKey(state.name, state.year, state.month), state.supervisorName || "");
+  }
+
+  function loadBu(name, year, month) {
+    return loadWithCarryForward(buKey, name, year, month);
+  }
+
+  function saveBu() {
+    if (!state.name) return;
+    localStorage.setItem(buKey(state.name, state.year, state.month), state.buName || "");
   }
 
   function getRecord(dateStr) {
@@ -135,6 +174,7 @@
   var nextMonthBtn = document.getElementById("nextMonthBtn");
   var monthLabel = document.getElementById("monthLabel");
   var supervisorInput = document.getElementById("supervisorInput");
+  var buInput = document.getElementById("buInput");
 
   var statusDot = document.getElementById("statusDot");
   var statusText = document.getElementById("statusText");
@@ -190,6 +230,7 @@
     localStorage.setItem(LAST_NAME_KEY, name);
     state.records = loadRecords(state.name, state.year, state.month);
     state.supervisorName = loadSupervisor(state.name, state.year, state.month);
+    state.buName = loadBu(state.name, state.year, state.month);
     render();
   }
 
@@ -201,6 +242,7 @@
     if (state.name) {
       state.records = loadRecords(state.name, state.year, state.month);
       state.supervisorName = loadSupervisor(state.name, state.year, state.month);
+      state.buName = loadBu(state.name, state.year, state.month);
     }
     render();
   }
@@ -232,7 +274,7 @@
   function handleClockIn() {
     if (!state.name || !isViewingCurrentMonth()) return;
     var rec = getRecord(todayStr);
-    if (rec.clockIn) return;
+    if (LOCK_AFTER_CLOCK && rec.clockIn) return;
     setRecord(todayStr, { clockIn: currentTimeStr() });
     render();
   }
@@ -240,7 +282,7 @@
   function handleClockOut() {
     if (!state.name || !isViewingCurrentMonth()) return;
     var rec = getRecord(todayStr);
-    if (!rec.clockIn || rec.clockOut) return;
+    if (LOCK_AFTER_CLOCK && (!rec.clockIn || rec.clockOut)) return;
     setRecord(todayStr, { clockOut: currentTimeStr() });
     render();
   }
@@ -278,17 +320,17 @@
       statusText.textContent = "尚未上班";
       statusDot.className = "status-dot";
       clockInBtn.disabled = false;
-      clockOutBtn.disabled = true;
+      clockOutBtn.disabled = LOCK_AFTER_CLOCK;
     } else if (!rec.clockOut) {
       statusText.textContent = "上班中";
       statusDot.className = "status-dot working";
-      clockInBtn.disabled = true;
+      clockInBtn.disabled = LOCK_AFTER_CLOCK;
       clockOutBtn.disabled = false;
     } else {
       statusText.textContent = "今日已完成";
       statusDot.className = "status-dot done";
-      clockInBtn.disabled = true;
-      clockOutBtn.disabled = true;
+      clockInBtn.disabled = LOCK_AFTER_CLOCK;
+      clockOutBtn.disabled = LOCK_AFTER_CLOCK;
     }
   }
 
@@ -429,6 +471,8 @@
     monthLabel.textContent = state.year + " 年 " + state.month + " 月";
     supervisorInput.value = state.supervisorName || "";
     supervisorInput.disabled = !state.name;
+    buInput.value = state.buName || "";
+    buInput.disabled = !state.name;
     renderClockCard();
     if (!state.name) {
       recordTbody.innerHTML = "";
@@ -451,6 +495,8 @@
 
     document.getElementById("printTitle").textContent = "米果計畫 實習生打卡月結表";
     document.getElementById("printName").textContent = "姓名：" + state.name;
+    document.getElementById("printBu").textContent = state.buName ? ("BU / 部門：" + state.buName) : "";
+    document.getElementById("printSupervisor").textContent = state.supervisorName ? ("主管：" + state.supervisorName) : "";
     document.getElementById("printMonth").textContent = "月份：" + state.year + " 年 " + state.month + " 月";
     document.getElementById("printTotalHours").textContent = "總工時：" + summary.totalHours.toFixed(2) + " 小時";
     document.getElementById("printAttendDays").textContent = "出勤天數：" + summary.attendDays;
@@ -521,6 +567,7 @@
       nameSelect.value = initialName;
       state.records = loadRecords(initialName, y, m);
       state.supervisorName = loadSupervisor(initialName, y, m);
+      state.buName = loadBu(initialName, y, m);
     }
 
     render();
@@ -537,6 +584,10 @@
     supervisorInput.addEventListener("change", function () {
       state.supervisorName = supervisorInput.value.trim();
       saveSupervisor();
+    });
+    buInput.addEventListener("change", function () {
+      state.buName = buInput.value.trim();
+      saveBu();
     });
   }
 

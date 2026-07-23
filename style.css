@@ -85,7 +85,7 @@ select, input[type="text"], input[type="time"] {
   color: var(--color-text);
 }
 
-#supervisorInput {
+#supervisorInput, #buInput {
   width: 100%;
 }
 
@@ -337,7 +337,8 @@ td input.note-input {
   .print-meta, .print-summary {
     display: flex;
     justify-content: center;
-    gap: 24px;
+    flex-wrap: wrap;
+    gap: 10px 24px;
     font-size: 0.9rem;
     margin-bottom: 6px;
   }
