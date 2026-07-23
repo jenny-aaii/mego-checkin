@@ -647,7 +647,7 @@
       if (calc.error) {
         tdHours.textContent = "時間錯誤";
       } else {
-        tdHours.textContent = calc.hours === null ? "-" : calc.hours.toFixed(2);
+        tdHours.textContent = calc.hours === null ? "-" : calc.hours.toFixed(1);
       }
       tr.appendChild(tdHours);
 
@@ -667,7 +667,7 @@
     }
 
     totalHours = Math.round(totalHours * 100) / 100;
-    totalHoursEl.textContent = totalHours.toFixed(2);
+    totalHoursEl.textContent = totalHours.toFixed(1);
     attendDaysEl.textContent = attendDays;
     leaveDaysEl.textContent = leaveDays;
 
@@ -704,7 +704,7 @@
     document.getElementById("printBu").textContent = "BU / 部門：" + (state.buName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printSupervisor").textContent = "主管：" + (state.supervisorName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printMonth").textContent = "期間：" + formatPeriodRange(state.periodStart, state.periodEnd);
-    document.getElementById("printTotalHours").textContent = "總工時：" + summary.totalHours.toFixed(2) + " 小時";
+    document.getElementById("printTotalHours").textContent = "總工時：" + summary.totalHours.toFixed(1) + " 小時";
     document.getElementById("printAttendDays").textContent = "出勤天數：" + summary.attendDays;
     document.getElementById("printLeaveDays").textContent = "請假天數：" + summary.leaveDays;
     document.getElementById("printSupervisorName").textContent = state.supervisorName || " ";
@@ -727,7 +727,7 @@
         weekday,
         rec.clockIn || "-",
         rec.clockOut || "-",
-        calc.hours === null ? "-" : calc.hours.toFixed(2),
+        calc.hours === null ? "-" : calc.hours.toFixed(1),
         rec.leaveType || "-",
         rec.note || ""
       ];
