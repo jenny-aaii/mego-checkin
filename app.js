@@ -586,7 +586,8 @@
 
   // ---------- render ----------
   function render() {
-    monthLabel.textContent = state.year + " 年 " + state.month + " 月（" + formatPeriodRange(state.periodStart, state.periodEnd) + "）";
+    monthLabel.innerHTML = state.year + " 年 " + state.month + " 月"
+      + '<span class="month-range">（' + formatPeriodRange(state.periodStart, state.periodEnd) + '）</span>';
     periodStartInput.value = state.periodStart;
     periodEndInput.value = state.periodEnd;
     periodStartInput.disabled = state.user.role !== "hr";
