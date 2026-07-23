@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>米果計畫｜實習生打卡時數表</title>
-<link rel="stylesheet" href="style.css?v=7" />
+<link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 
@@ -24,6 +24,7 @@
     <h1>米果計畫｜實習生打卡時數表</h1>
     <div class="user-bar">
       <span id="userBadge"></span>
+      <button id="manageInternsBtn" class="btn-secondary hidden" type="button">管理實習生名單</button>
       <button id="logoutBtn" class="btn-secondary" type="button">登出</button>
     </div>
   </header>
@@ -121,6 +122,23 @@
 
 </div>
 
+<!-- HR 專用：管理實習生名單 -->
+<div id="manageInternsOverlay" class="overlay hidden">
+  <div class="overlay-card">
+    <div class="overlay-header">
+      <h2>管理實習生名單</h2>
+      <button id="closeManageInternsBtn" class="btn-icon" type="button" aria-label="關閉">×</button>
+    </div>
+    <p class="notice-inline">刪除只會移除登入白名單，不會刪除該實習生已產生的打卡紀錄。</p>
+    <div id="internListManage" class="intern-manage-list"></div>
+    <div class="add-intern-row">
+      <input type="text" id="newInternName" placeholder="姓名" />
+      <input type="email" id="newInternEmail" placeholder="Google 帳號 email" />
+      <button id="addInternBtn" class="btn-primary" type="button">新增</button>
+    </div>
+  </div>
+</div>
+
 <!-- 列印用月結表，畫面上隱藏，僅於匯出 PDF 時顯示 -->
 <div id="printArea" class="print-only">
   <h1 id="printTitle"></h1>
@@ -159,6 +177,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

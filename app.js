@@ -217,6 +217,13 @@
   var loginError = document.getElementById("loginError");
   var logoutBtn = document.getElementById("logoutBtn");
   var userBadge = document.getElementById("userBadge");
+  var manageInternsBtn = document.getElementById("manageInternsBtn");
+  var manageInternsOverlay = document.getElementById("manageInternsOverlay");
+  var closeManageInternsBtn = document.getElementById("closeManageInternsBtn");
+  var internListManage = document.getElementById("internListManage");
+  var newInternName = document.getElementById("newInternName");
+  var newInternEmail = document.getElementById("newInternEmail");
+  var addInternBtn = document.getElementById("addInternBtn");
 
   var internSelectGroup = document.getElementById("internSelectGroup");
   var internSelect = document.getElementById("internSelect");
@@ -304,9 +311,8 @@
     var setupPromise;
     if (state.user.role === "hr") {
       internSelectGroup.classList.remove("hidden");
-      setupPromise = db.collection("checkinUsers").where("role", "==", "intern").get().then(function (snap) {
-        state.interns = snap.docs.map(function (d) { return { email: d.id, name: d.data().name }; });
-        populateInternSelect();
+      manageInternsBtn.classList.remove("hidden");
+      setupPromise = loadInternsList().then(function () {
         var lastEmail = localStorage.getItem(LAST_INTERN_KEY);
         var initial = state.interns.some(function (i) { return i.email === lastEmail; })
           ? lastEmail
@@ -336,6 +342,14 @@
     return setupPromise.then(function () { return render(); });
   }
 
+  function loadInternsList() {
+    return db.collection("checkinUsers").where("role", "==", "intern").get().then(function (snap) {
+      state.interns = snap.docs.map(function (d) { return { email: d.id, name: d.data().name }; });
+      populateInternSelect();
+      renderInternManageList();
+    });
+  }
+
   function populateInternSelect() {
     internSelect.innerHTML = "";
     state.interns.forEach(function (i) {
@@ -345,6 +359,93 @@
       internSelect.appendChild(opt);
     });
   }
+
+  // ---------- HR: manage intern whitelist ----------
+  function renderInternManageList() {
+    internListManage.innerHTML = "";
+    if (state.interns.length === 0) {
+      var empty = document.createElement("p");
+      empty.className = "notice-inline";
+      empty.textContent = "目前沒有實習生。";
+      internListManage.appendChild(empty);
+      return;
+    }
+    state.interns.forEach(function (i) {
+      var row = document.createElement("div");
+      row.className = "intern-manage-row";
+
+      var info = document.createElement("div");
+      info.className = "intern-info";
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = i.name;
+      var emailSpan = document.createElement("span");
+      emailSpan.className = "intern-email";
+      emailSpan.textContent = i.email;
+      info.appendChild(nameSpan);
+      info.appendChild(emailSpan);
+
+      var delBtn = document.createElement("button");
+      delBtn.className = "btn-danger";
+      delBtn.type = "button";
+      delBtn.textContent = "刪除";
+      delBtn.addEventListener("click", function () {
+        if (!window.confirm("確定要刪除「" + i.name + "」的登入權限嗎？（已產生的打卡紀錄不會被刪除）")) return;
+        db.collection("checkinUsers").doc(i.email).delete().then(function () {
+          return loadInternsList();
+        }).then(function () {
+          if (state.viewingEmail === i.email) {
+            var nextEmail = state.interns[0] ? state.interns[0].email : "";
+            internSelect.value = nextEmail;
+            return setViewingIntern(nextEmail).then(render);
+          }
+        }).catch(function (err) {
+          console.error("delete intern error:", err);
+          window.alert("刪除失敗，請稍後再試。");
+        });
+      });
+
+      row.appendChild(info);
+      row.appendChild(delBtn);
+      internListManage.appendChild(row);
+    });
+  }
+
+  manageInternsBtn.addEventListener("click", function () {
+    manageInternsOverlay.classList.remove("hidden");
+  });
+  closeManageInternsBtn.addEventListener("click", function () {
+    manageInternsOverlay.classList.add("hidden");
+  });
+  addInternBtn.addEventListener("click", function () {
+    var name = newInternName.value.trim();
+    var email = newInternEmail.value.trim().toLowerCase();
+    if (!name || !email) {
+      window.alert("請填寫姓名與 email。");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      window.alert("email 格式不正確。");
+      return;
+    }
+    db.collection("checkinUsers").doc(email).get().then(function (doc) {
+      if (doc.exists) {
+        throw new Error("ALREADY_EXISTS:" + doc.data().name + ":" + doc.data().role);
+      }
+      return db.collection("checkinUsers").doc(email).set({ name: name, role: "intern" });
+    }).then(function () {
+      newInternName.value = "";
+      newInternEmail.value = "";
+      return loadInternsList();
+    }).catch(function (err) {
+      if (("" + err.message).indexOf("ALREADY_EXISTS:") === 0) {
+        var parts = err.message.split(":");
+        window.alert("這個 email 已經存在名單中（" + parts[1] + "／" + (parts[2] === "hr" ? "HR" : "實習生") + "），請確認後再試。");
+        return;
+      }
+      console.error("add intern error:", err);
+      window.alert("新增失敗，請稍後再試。");
+    });
+  });
 
   function setViewingIntern(email) {
     var intern = state.interns.find(function (i) { return i.email === email; });

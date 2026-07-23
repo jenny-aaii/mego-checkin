@@ -81,6 +81,96 @@ body {
   width: 100%;
 }
 
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 38, 32, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.overlay-card {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.overlay-header h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.notice-inline {
+  font-size: 0.78rem;
+  color: var(--color-text-soft);
+  margin: 0 0 12px;
+}
+
+.intern-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.intern-manage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.intern-manage-row .intern-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.intern-manage-row .intern-email {
+  font-size: 0.75rem;
+  color: var(--color-text-soft);
+}
+
+.intern-manage-row .btn-danger {
+  border: none;
+  background: none;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+}
+
+.add-intern-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-intern-row input {
+  width: 100%;
+}
+
+.add-intern-row .btn-primary {
+  width: 100%;
+}
+
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
