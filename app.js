@@ -191,7 +191,13 @@
 
   // Core work-hour rule (Sec 3.2): hours = (clockOut - clockIn) - lunch deduction
   // Lunch deduction: >=4hr worked -> deduct 1hr; otherwise no deduction.
-  function calcDay(rec) {
+  // From the November period onward (BU assignment), hours are floored to
+  // whole numbers instead of kept as decimals — see chat 2026-11 policy change.
+  function isWholeHourPeriod(year, month) {
+    return year > 2026 || (year === 2026 && month >= 11);
+  }
+
+  function calcDay(rec, wholeHour) {
     if (rec.leaveType) {
       return { lunch: null, hours: 0, complete: true, isLeave: true };
     }
@@ -207,8 +213,12 @@
     var durationHours = durationMin / 60;
     var lunch = durationHours >= 4 ? 1 : 0;
     var hours = Math.max(durationHours - lunch, 0);
-    hours = Math.round(hours * 100) / 100;
+    hours = wholeHour ? Math.floor(hours) : Math.round(hours * 100) / 100;
     return { lunch: lunch, hours: hours, complete: true, isLeave: false };
+  }
+
+  function formatHours(hours, wholeHour) {
+    return wholeHour ? String(hours) : hours.toFixed(1);
   }
 
   // ---------- DOM refs ----------
@@ -628,6 +638,7 @@
   function renderTable() {
     recordTbody.innerHTML = "";
     var dates = dateRange(state.periodStart, state.periodEnd);
+    var wholeHour = isWholeHourPeriod(state.year, state.month);
 
     var totalHours = 0;
     var attendDays = 0;
@@ -641,7 +652,7 @@
       var dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
       var weekday = WEEKDAY_CHARS[dateObj.getDay()];
       var rec = getRecord(dateStr);
-      var calc = calcDay(rec);
+      var calc = calcDay(rec, wholeHour);
 
       var tr = document.createElement("tr");
       if (dateStr === todayStr) tr.classList.add("today-row");
@@ -671,7 +682,7 @@
       if (calc.error) {
         tdHours.textContent = "時間錯誤";
       } else {
-        tdHours.textContent = calc.hours === null ? "-" : calc.hours.toFixed(1);
+        tdHours.textContent = calc.hours === null ? "-" : formatHours(calc.hours, wholeHour);
       }
       tr.appendChild(tdHours);
 
@@ -690,8 +701,8 @@
       }
     }
 
-    totalHours = Math.round(totalHours * 100) / 100;
-    totalHoursEl.textContent = totalHours.toFixed(1);
+    totalHours = wholeHour ? totalHours : Math.round(totalHours * 100) / 100;
+    totalHoursEl.textContent = formatHours(totalHours, wholeHour);
     attendDaysEl.textContent = attendDays;
     leaveDaysEl.textContent = leaveDays;
 
@@ -722,13 +733,14 @@
   // ---------- PDF export ----------
   function exportPdf() {
     var summary = renderTable(); // ensure freshest numbers
+    var wholeHour = isWholeHourPeriod(state.year, state.month);
 
     document.getElementById("printTitle").textContent = "米果計畫 實習生打卡月結表";
     document.getElementById("printName").textContent = "姓名：" + state.viewingName;
     document.getElementById("printBu").textContent = "BU / 部門：" + (state.buName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printSupervisor").textContent = "主管：" + (state.supervisorName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printMonth").textContent = "期間：" + formatPeriodRange(state.periodStart, state.periodEnd);
-    document.getElementById("printTotalHours").textContent = "總工時：" + summary.totalHours.toFixed(1) + " 小時";
+    document.getElementById("printTotalHours").textContent = "總工時：" + formatHours(summary.totalHours, wholeHour) + " 小時";
     document.getElementById("printAttendDays").textContent = "出勤天數：" + summary.attendDays;
     document.getElementById("printLeaveDays").textContent = "請假天數：" + summary.leaveDays;
 
@@ -741,7 +753,7 @@
       var dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
       var weekday = WEEKDAY_CHARS[dateObj.getDay()];
       var rec = getRecord(dateStr);
-      var calc = calcDay(rec);
+      var calc = calcDay(rec, wholeHour);
 
       var tr = document.createElement("tr");
       if (rec.leaveType) tr.classList.add("leave-row");
@@ -750,7 +762,7 @@
         weekday,
         rec.clockIn || "-",
         rec.clockOut || "-",
-        calc.hours === null ? "-" : calc.hours.toFixed(1),
+        calc.hours === null ? "-" : formatHours(calc.hours, wholeHour),
         rec.leaveType || "-",
         rec.note || ""
       ];
