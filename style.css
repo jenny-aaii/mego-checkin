@@ -599,6 +599,7 @@ td input.note-input {
     color: var(--color-text);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    zoom: 0.8;
   }
   #printTitle {
     font-size: 1.1rem;

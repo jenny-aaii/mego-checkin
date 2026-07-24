@@ -731,7 +731,6 @@
     document.getElementById("printTotalHours").textContent = "總工時：" + summary.totalHours.toFixed(1) + " 小時";
     document.getElementById("printAttendDays").textContent = "出勤天數：" + summary.attendDays;
     document.getElementById("printLeaveDays").textContent = "請假天數：" + summary.leaveDays;
-    document.getElementById("printSupervisorName").textContent = state.supervisorName || " ";
 
     var printTbody = document.getElementById("printTbody");
     printTbody.innerHTML = "";
