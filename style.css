@@ -182,6 +182,18 @@ body {
   color: var(--color-text);
 }
 
+.role-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-accent-bg);
+  color: var(--color-text-soft);
+  font-size: 0.68rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
 .intern-manage-row .intern-email {
   font-size: 0.75rem;
   color: var(--color-text-soft);
@@ -243,6 +255,17 @@ body {
   flex: 1.8;
 }
 
+.add-intern-row select {
+  flex: none;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  padding: 8px 8px;
+  font-family: inherit;
+  color: var(--color-text);
+}
+
 .add-intern-row .btn-primary {
   flex: none;
   width: auto;
@@ -252,7 +275,8 @@ body {
 }
 
 @media (max-width: 420px) {
-  .add-intern-row input {
+  .add-intern-row input,
+  .add-intern-row select {
     flex-basis: 100%;
   }
   .add-intern-row .btn-primary {
