@@ -359,7 +359,7 @@
         return { email: d.id, name: d.data().name, role: d.data().role };
       });
       state.allUsers = all;
-      state.interns = all.filter(function (u) { return u.role === "intern"; });
+      state.interns = all.filter(function (u) { return u.role !== "hr"; });
       populateInternSelect();
       renderInternManageList();
     });
