@@ -734,7 +734,7 @@
     var summary = renderTable(); // ensure freshest numbers
     var wholeHour = isWholeHourPeriod(state.year, state.month);
 
-    document.getElementById("printTitle").textContent = "米果計畫 實習生打卡月結表";
+    document.getElementById("printTitle").textContent = "實習生打卡月結表";
     document.getElementById("printName").textContent = "姓名：" + state.viewingName;
     document.getElementById("printBu").textContent = "BU / 部門：" + (state.buName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printSupervisor").textContent = "主管：" + (state.supervisorName || "＿＿＿＿＿＿＿＿");
