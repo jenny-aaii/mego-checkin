@@ -2,18 +2,17 @@
   "use strict";
 
   var FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBQ5s8Rvu79XLlEBzWUjD24CXpbdRBokQc",
-    authDomain: "mevolution-go.firebaseapp.com",
-    projectId: "mevolution-go",
-    storageBucket: "mevolution-go.firebasestorage.app",
-    messagingSenderId: "824909531681",
-    appId: "1:824909531681:web:87c700c23ec04085797160"
+    apiKey: "AIzaSyAkdX6kh-147M86sF39jB6H8UDzKpVjjbA",
+    authDomain: "mego-checkin.firebaseapp.com",
+    projectId: "mego-checkin",
+    storageBucket: "mego-checkin.firebasestorage.app",
+    messagingSenderId: "853475583238",
+    appId: "1:853475583238:web:a7f76a8c6a6232ed236a87"
   };
 
-  // TEMP: while true, clock in/out buttons stay clickable even after already
-  // used today, so testing isn't blocked. Set back to true to re-lock once
-  // testing is done.
-  var LOCK_AFTER_CLOCK = false;
+  // Once clocked in/out for the day, the corresponding button locks so it
+  // can't be pressed again; corrections after that go through the table.
+  var LOCK_AFTER_CLOCK = true;
 
   var LEAVE_TYPES = ["病假", "事假", "公假", "其他"];
   var WEEKDAY_CHARS = ["日", "一", "二", "三", "四", "五", "六"];

@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Security rules for the mego-checkin (米果計畫打卡) Firestore database.
+// Paste this into Firebase Console → Firestore Database → Rules, then Publish.
+//
+// Data model (see app.js):
+//   checkinUsers/{email}       - login whitelist: { name, role: "intern"|"hr" }
+//   checkins/{email_yyyy-mm}   - one doc per person per month: { internEmail, name, buName, supervisorName, records }
+//   checkinMeta/{yyyy-mm}      - optional per-month period override: { periodStart, periodEnd }
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHR() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/checkinUsers/$(request.auth.token.email)) &&
+        get(/databases/$(database)/documents/checkinUsers/$(request.auth.token.email)).data.role == 'hr';
+    }
+
+    match /checkinUsers/{email} {
+      // Any signed-in Google account can look up its own whitelist doc (needed
+      // right after login, before we know whether it's whitelisted at all).
+      allow get: if isSignedIn();
+      // Only HR can see the full roster (used by the "管理實習生名單" screen).
+      allow list: if isHR();
+      // Only HR can add/remove accounts.
+      allow write: if isHR();
+    }
+
+    match /checkins/{checkinId} {
+      // checkinId is "<email>_<yyyy-mm>" — an intern may only touch their own
+      // rows; HR can read/write everyone's.
+      allow read, write: if isHR() ||
+        (isSignedIn() && checkinId.split('_')[0] == request.auth.token.email);
+    }
+
+    match /checkinMeta/{monthKey} {
+      // Period overrides are shared read-only info; only HR adjusts them.
+      allow read: if isSignedIn();
+      allow write: if isHR();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
