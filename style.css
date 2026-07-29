@@ -303,6 +303,10 @@ body {
   min-width: 0;
 }
 
+.field-group.field-group-full {
+  grid-column: 1 / -1;
+}
+
 .field-group label {
   display: block;
   font-size: 0.8rem;
