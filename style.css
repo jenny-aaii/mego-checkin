@@ -294,17 +294,14 @@ body {
 }
 
 .selector-card {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .field-group {
-  min-width: 0;
-}
-
-.field-group.field-group-full {
-  grid-column: 1 / -1;
+  flex: 1;
+  min-width: 200px;
 }
 
 .field-group label {
@@ -341,7 +338,7 @@ select, input[type="text"], input[type="time"] {
 .month-row {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -578,7 +575,7 @@ td input.note-input {
 
 @media (max-width: 480px) {
   .topbar h1 { font-size: 1.1rem; }
-  .selector-card { grid-template-columns: 1fr; }
+  .selector-card { flex-direction: column; }
   .clock-buttons { flex-direction: column; }
   .btn-primary { width: 100%; }
 }
