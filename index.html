@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>實習生打卡系統</title>
-<link rel="stylesheet" href="style.css?v=17" />
+<link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
 
@@ -47,9 +47,9 @@
     <div class="field-group">
       <label>本期區間（預設上月25號~本月24號，可個別調整）</label>
       <div class="period-row">
-        <input type="date" id="periodStartInput" />
+        <input type="date" id="periodStartInput" min="2020-01-01" />
         <span class="period-sep">~</span>
-        <input type="date" id="periodEndInput" />
+        <input type="date" id="periodEndInput" min="2020-01-01" />
       </div>
     </div>
 
