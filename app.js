@@ -14,8 +14,11 @@
   // can't be pressed again; corrections after that go through the table.
   var LOCK_AFTER_CLOCK = true;
 
-  var LEAVE_TYPES = ["病假", "事假", "公假", "其他"];
   var WEEKDAY_CHARS = ["日", "一", "二", "三", "四", "五", "六"];
+
+  // Fixed lunch break: a shift that spans the whole window gets 1hr deducted.
+  var LUNCH_START_MIN = 12 * 60 + 30;
+  var LUNCH_END_MIN = 13 * 60 + 30;
 
   var LAST_MONTH_KEY = "mius_lastMonth";
   var LAST_INTERN_KEY = "mius_lastInternEmail";
@@ -35,7 +38,7 @@
     month: 0, // 1-12
     periodStart: "",
     periodEnd: "",
-    records: {}, // dateStr -> {clockIn, clockOut, leaveType, note}
+    records: {}, // dateStr -> {clockIn, clockOut, hoursOverride, note}
     supervisorName: "",
     buName: ""
   };
@@ -141,7 +144,7 @@
   }
 
   function getRecord(dateStr) {
-    return state.records[dateStr] || { clockIn: "", clockOut: "", leaveType: "", note: "" };
+    return state.records[dateStr] || { clockIn: "", clockOut: "", hoursOverride: null, note: "" };
   }
 
   function setRecord(dateStr, patch) {
@@ -149,9 +152,17 @@
     var updated = {};
     updated.clockIn = patch.clockIn !== undefined ? patch.clockIn : rec.clockIn;
     updated.clockOut = patch.clockOut !== undefined ? patch.clockOut : rec.clockOut;
-    updated.leaveType = patch.leaveType !== undefined ? patch.leaveType : rec.leaveType;
     updated.note = patch.note !== undefined ? patch.note : rec.note;
-    if (!updated.clockIn && !updated.clockOut && !updated.leaveType && !updated.note) {
+    if (patch.hoursOverride !== undefined) {
+      // Editing the 工時 cell directly overrides the computed value.
+      updated.hoursOverride = patch.hoursOverride;
+    } else if (patch.clockIn !== undefined || patch.clockOut !== undefined) {
+      // Editing the clock times always falls back to the computed value.
+      updated.hoursOverride = null;
+    } else {
+      updated.hoursOverride = rec.hoursOverride;
+    }
+    if (!updated.clockIn && !updated.clockOut && !updated.hoursOverride && !updated.note) {
       delete state.records[dateStr];
     } else {
       state.records[dateStr] = updated;
@@ -171,8 +182,9 @@
     return h * 60 + m;
   }
 
-  // Core work-hour rule (Sec 3.2): hours = (clockOut - clockIn) - lunch deduction
-  // Lunch deduction: >=4hr worked -> deduct 1hr; otherwise no deduction.
+  // Core work-hour rule: hours = (clockOut - clockIn) - lunch deduction.
+  // Lunch deduction: shift spans the whole 12:30-13:30 window -> deduct 1hr;
+  // otherwise no deduction.
   // From the November period onward (BU assignment), hours are floored to
   // whole numbers instead of kept as decimals — see chat 2026-11 policy change.
   function isWholeHourPeriod(year, month) {
@@ -180,23 +192,23 @@
   }
 
   function calcDay(rec, wholeHour) {
-    if (rec.leaveType) {
-      return { lunch: null, hours: 0, complete: true, isLeave: true };
+    if (rec.hoursOverride !== null && rec.hoursOverride !== undefined && rec.hoursOverride !== "") {
+      return { hours: Number(rec.hoursOverride), complete: true, overridden: true };
     }
     var inMin = timeToMinutes(rec.clockIn);
     var outMin = timeToMinutes(rec.clockOut);
     if (inMin === null || outMin === null) {
-      return { lunch: null, hours: null, complete: false, isLeave: false };
+      return { hours: null, complete: false };
     }
     var durationMin = outMin - inMin;
     if (durationMin <= 0) {
-      return { lunch: null, hours: null, complete: false, isLeave: false, error: true };
+      return { hours: null, complete: false, error: true };
     }
-    var durationHours = durationMin / 60;
-    var lunch = durationHours >= 4 ? 1 : 0;
-    var hours = Math.max(durationHours - lunch, 0);
+    var spansLunch = inMin <= LUNCH_START_MIN && outMin >= LUNCH_END_MIN;
+    var netMin = durationMin - (spansLunch ? 60 : 0);
+    var hours = Math.max(netMin / 60, 0);
     hours = wholeHour ? Math.floor(hours) : Math.round(hours * 100) / 100;
-    return { lunch: lunch, hours: hours, complete: true, isLeave: false };
+    return { hours: hours, complete: true };
   }
 
   function formatHours(hours, wholeHour) {
@@ -237,11 +249,8 @@
   var notTodayNotice = document.getElementById("notTodayNotice");
 
   var totalHoursEl = document.getElementById("totalHours");
-  var attendDaysEl = document.getElementById("attendDays");
-  var leaveDaysEl = document.getElementById("leaveDays");
 
   var recordTbody = document.getElementById("recordTbody");
-  var leaveStatList = document.getElementById("leaveStatList");
   var exportBtn = document.getElementById("exportBtn");
 
   // ---------- auth ----------
@@ -547,12 +556,7 @@
     }
 
     var rec = getRecord(todayStr);
-    if (rec.leaveType) {
-      statusText.textContent = "今日請假（" + rec.leaveType + "）";
-      statusDot.className = "status-dot done";
-      clockInBtn.disabled = true;
-      clockOutBtn.disabled = true;
-    } else if (!rec.clockIn) {
+    if (!rec.clockIn) {
       statusText.textContent = "尚未上班";
       statusDot.className = "status-dot";
       clockInBtn.disabled = false;
@@ -571,35 +575,29 @@
   }
 
   // ---------- table rendering ----------
-  function buildLeaveSelect(dateStr, currentValue) {
-    var select = document.createElement("select");
-    select.className = "leave-select";
-    var noneOpt = document.createElement("option");
-    noneOpt.value = "";
-    noneOpt.textContent = "正常";
-    select.appendChild(noneOpt);
-    LEAVE_TYPES.forEach(function (lt) {
-      var opt = document.createElement("option");
-      opt.value = lt;
-      opt.textContent = lt;
-      select.appendChild(opt);
-    });
-    select.value = currentValue || "";
-    select.addEventListener("change", function () {
-      setRecord(dateStr, { leaveType: select.value }).then(render);
-    });
-    return select;
-  }
-
-  function buildTimeInput(dateStr, field, currentValue, disabled) {
+  function buildTimeInput(dateStr, field, currentValue) {
     var input = document.createElement("input");
     input.type = "time";
     input.value = currentValue || "";
-    input.disabled = !!disabled;
     input.addEventListener("change", function () {
       var patch = {};
       patch[field] = input.value;
       setRecord(dateStr, patch).then(render);
+    });
+    return input;
+  }
+
+  function buildHoursInput(dateStr, calc) {
+    var input = document.createElement("input");
+    input.type = "number";
+    input.step = "0.1";
+    input.min = "0";
+    input.className = "hours-input";
+    input.value = calc.hours === null ? "" : calc.hours;
+    input.placeholder = "-";
+    input.addEventListener("change", function () {
+      var val = input.value === "" ? null : input.value;
+      setRecord(dateStr, { hoursOverride: val }).then(render);
     });
     return input;
   }
@@ -622,10 +620,6 @@
     var wholeHour = isWholeHourPeriod(state.year, state.month);
 
     var totalHours = 0;
-    var attendDays = 0;
-    var leaveDays = 0;
-    var leaveCounts = {};
-    LEAVE_TYPES.forEach(function (lt) { leaveCounts[lt] = 0; });
 
     for (var i = 0; i < dates.length; i++) {
       var dateStr = dates[i];
@@ -637,7 +631,6 @@
 
       var tr = document.createElement("tr");
       if (dateStr === todayStr) tr.classList.add("today-row");
-      if (rec.leaveType) tr.classList.add("leave-row");
 
       var tdDate = document.createElement("td");
       tdDate.textContent = dateParts[1] + "/" + dateParts[2];
@@ -648,23 +641,15 @@
       tr.appendChild(tdWeekday);
 
       var tdIn = document.createElement("td");
-      tdIn.appendChild(buildTimeInput(dateStr, "clockIn", rec.clockIn, !!rec.leaveType));
+      tdIn.appendChild(buildTimeInput(dateStr, "clockIn", rec.clockIn));
       tr.appendChild(tdIn);
 
       var tdOut = document.createElement("td");
-      tdOut.appendChild(buildTimeInput(dateStr, "clockOut", rec.clockOut, !!rec.leaveType));
+      tdOut.appendChild(buildTimeInput(dateStr, "clockOut", rec.clockOut));
       tr.appendChild(tdOut);
 
-      var tdLeave = document.createElement("td");
-      tdLeave.appendChild(buildLeaveSelect(dateStr, rec.leaveType));
-      tr.appendChild(tdLeave);
-
       var tdHours = document.createElement("td");
-      if (calc.error) {
-        tdHours.textContent = "時間錯誤";
-      } else {
-        tdHours.textContent = calc.hours === null ? "-" : formatHours(calc.hours, wholeHour);
-      }
+      tdHours.appendChild(buildHoursInput(dateStr, calc));
       tr.appendChild(tdHours);
 
       var tdNote = document.createElement("td");
@@ -673,28 +658,15 @@
 
       recordTbody.appendChild(tr);
 
-      if (rec.leaveType) {
-        leaveDays++;
-        if (leaveCounts[rec.leaveType] !== undefined) leaveCounts[rec.leaveType]++;
-      } else if (calc.complete && calc.hours !== null) {
+      if (calc.hours !== null) {
         totalHours += calc.hours;
-        attendDays++;
       }
     }
 
     totalHours = wholeHour ? totalHours : Math.round(totalHours * 100) / 100;
     totalHoursEl.textContent = formatHours(totalHours, wholeHour);
-    attendDaysEl.textContent = attendDays;
-    leaveDaysEl.textContent = leaveDays;
 
-    leaveStatList.innerHTML = "";
-    LEAVE_TYPES.forEach(function (lt) {
-      var span = document.createElement("span");
-      span.innerHTML = lt + "：<span class=\"leave-count\">" + leaveCounts[lt] + "</span> 天";
-      leaveStatList.appendChild(span);
-    });
-
-    return { totalHours: totalHours, attendDays: attendDays, leaveDays: leaveDays, leaveCounts: leaveCounts };
+    return { totalHours: totalHours };
   }
 
   // ---------- render ----------
@@ -714,14 +686,12 @@
     var summary = renderTable(); // ensure freshest numbers
     var wholeHour = isWholeHourPeriod(state.year, state.month);
 
-    document.getElementById("printTitle").textContent = "實習生打卡月結表";
+    document.getElementById("printTitle").textContent = "實習生每月時數表";
     document.getElementById("printName").textContent = "姓名：" + state.viewingName;
     document.getElementById("printBu").textContent = "BU / 部門：" + (state.buName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printSupervisor").textContent = "主管：" + (state.supervisorName || "＿＿＿＿＿＿＿＿");
     document.getElementById("printMonth").textContent = "期間：" + formatPeriodRange(state.periodStart, state.periodEnd);
     document.getElementById("printTotalHours").textContent = "總工時：" + formatHours(summary.totalHours, wholeHour) + " 小時";
-    document.getElementById("printAttendDays").textContent = "出勤天數：" + summary.attendDays;
-    document.getElementById("printLeaveDays").textContent = "請假天數：" + summary.leaveDays;
 
     var printTbody = document.getElementById("printTbody");
     printTbody.innerHTML = "";
@@ -735,14 +705,12 @@
       var calc = calcDay(rec, wholeHour);
 
       var tr = document.createElement("tr");
-      if (rec.leaveType) tr.classList.add("leave-row");
       var cells = [
         dateParts[1] + "/" + dateParts[2],
         weekday,
         rec.clockIn || "-",
         rec.clockOut || "-",
         calc.hours === null ? "-" : formatHours(calc.hours, wholeHour),
-        rec.leaveType || "-",
         rec.note || ""
       ];
       cells.forEach(function (val) {
@@ -752,11 +720,6 @@
       });
       printTbody.appendChild(tr);
     }
-
-    var printLeaveStats = document.getElementById("printLeaveStats");
-    printLeaveStats.innerHTML = LEAVE_TYPES.map(function (lt) {
-      return lt + "：" + summary.leaveCounts[lt] + " 天";
-    }).join("　");
 
     window.print();
   }
