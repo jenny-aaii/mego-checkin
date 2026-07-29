@@ -225,7 +225,6 @@
   var nextMonthBtn = document.getElementById("nextMonthBtn");
   var monthLabel = document.getElementById("monthLabel");
   var supervisorInput = document.getElementById("supervisorInput");
-  var supervisorFieldGroup = document.getElementById("supervisorFieldGroup");
   var buInput = document.getElementById("buInput");
   var periodStartInput = document.getElementById("periodStartInput");
   var periodEndInput = document.getElementById("periodEndInput");
@@ -307,9 +306,6 @@
     if (state.user.role === "hr") {
       internSelectGroup.classList.remove("hidden");
       manageInternsBtn.classList.remove("hidden");
-      // HR sees 5 field-groups (odd) in the 2-column grid — span the last
-      // one (主管) full-width so it doesn't leave a lopsided half-empty row.
-      supervisorFieldGroup.classList.add("field-group-full");
       setupPromise = loadAllUsers().then(function () {
         var lastEmail = localStorage.getItem(LAST_INTERN_KEY);
         var initial = state.interns.some(function (i) { return i.email === lastEmail; })
@@ -320,7 +316,6 @@
       });
     } else {
       internSelectGroup.classList.add("hidden");
-      supervisorFieldGroup.classList.remove("field-group-full");
       setupPromise = setViewingIntern(state.user.email);
     }
 
