@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>實習生打卡系統</title>
-<link rel="stylesheet" href="style.css?v=20" />
+<link rel="stylesheet" href="style.css?v=21" />
 </head>
 <body>
 
@@ -77,21 +77,6 @@
     <p id="notTodayNotice" class="notice hidden">目前檢視非本月，打卡按鈕僅在檢視當月時可用，請於下表手動修正時間。</p>
   </section>
 
-  <section class="card summary-card">
-    <div class="summary-item">
-      <span class="summary-label">本月總工時</span>
-      <span class="summary-value" id="totalHours">0.00</span>
-    </div>
-    <div class="summary-item">
-      <span class="summary-label">出勤天數</span>
-      <span class="summary-value" id="attendDays">0</span>
-    </div>
-    <div class="summary-item">
-      <span class="summary-label">請假天數</span>
-      <span class="summary-value" id="leaveDays">0</span>
-    </div>
-  </section>
-
   <section class="card table-card">
     <div class="table-scroll">
       <table id="recordTable">
@@ -101,7 +86,6 @@
             <th>星期</th>
             <th>上班時間</th>
             <th>下班時間</th>
-            <th>假別</th>
             <th>工時</th>
             <th>備註</th>
           </tr>
@@ -111,9 +95,11 @@
     </div>
   </section>
 
-  <section class="card leave-stat-card">
-    <h2>請假統計</h2>
-    <div id="leaveStatList" class="leave-stat-list"></div>
+  <section class="card summary-card">
+    <div class="summary-item">
+      <span class="summary-label">本月總工時</span>
+      <span class="summary-value" id="totalHours">0.00</span>
+    </div>
   </section>
 
   <div class="export-row">
@@ -157,8 +143,6 @@
   </div>
   <div class="print-summary">
     <span id="printTotalHours"></span>
-    <span id="printAttendDays"></span>
-    <span id="printLeaveDays"></span>
   </div>
   <table id="printTable">
     <thead>
@@ -168,13 +152,11 @@
         <th>上班</th>
         <th>下班</th>
         <th>工時</th>
-        <th>假別</th>
         <th>備註</th>
       </tr>
     </thead>
     <tbody id="printTbody"></tbody>
   </table>
-  <div class="print-leave-stats" id="printLeaveStats"></div>
   <div class="print-signatures">
     <div class="sig-box"><span class="sig-label">實習生簽名</span><span class="sig-name">&nbsp;</span><span class="sig-line"></span></div>
     <div class="sig-box"><span class="sig-label">主管簽名</span><span class="sig-name" id="printSupervisorName">&nbsp;</span><span class="sig-line"></span></div>
@@ -184,6 +166,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>
