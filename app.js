@@ -80,54 +80,11 @@
   }
 
   // Default cycle is the 25th of the previous month through the 24th of this
-  // month (submission deadline is the 24th). Either end can be overridden
-  // per month (checkinMeta) for occasional early cutoffs — see chat.
+  // month (submission deadline is the 24th). Each intern's period is stored
+  // on their own checkins doc, so one person adjusting it never affects
+  // anyone else's view of the same month.
   function defaultPeriodEnd(year, month) {
     return year + "-" + pad2(month) + "-24";
-  }
-
-  var periodMetaCache = {}; // yyyyMM -> {periodStart, periodEnd} override doc data
-
-  function loadPeriodMeta(year, month) {
-    var key = yyyyMM(year, month);
-    if (periodMetaCache[key] !== undefined) return Promise.resolve(periodMetaCache[key]);
-    return db.collection("checkinMeta").doc(key).get().then(function (doc) {
-      var data = doc.exists ? doc.data() : null;
-      periodMetaCache[key] = data;
-      return data;
-    });
-  }
-
-  function resolvePeriodEnd(year, month) {
-    return loadPeriodMeta(year, month).then(function (meta) {
-      return (meta && meta.periodEnd) || defaultPeriodEnd(year, month);
-    });
-  }
-
-  function resolvePeriodStart(year, month) {
-    return loadPeriodMeta(year, month).then(function (meta) {
-      if (meta && meta.periodStart) return meta.periodStart;
-      var py = month === 1 ? year - 1 : year;
-      var pm = month === 1 ? 12 : month - 1;
-      return resolvePeriodEnd(py, pm).then(function (prevEnd) {
-        return addDaysISO(prevEnd, 1);
-      });
-    });
-  }
-
-  function resolvePeriod(year, month) {
-    return Promise.all([resolvePeriodStart(year, month), resolvePeriodEnd(year, month)])
-      .then(function (results) {
-        return { start: results[0], end: results[1] };
-      });
-  }
-
-  function savePeriodOverride(year, month, field, value) {
-    var key = yyyyMM(year, month);
-    var patch = {};
-    patch[field] = value;
-    periodMetaCache[key] = Object.assign({}, periodMetaCache[key] || {}, patch);
-    return db.collection("checkinMeta").doc(key).set(patch, { merge: true });
   }
 
   // ---------- checkins doc ----------
@@ -136,14 +93,38 @@
   }
 
   function emptyCheckinData(email, name) {
-    return { internEmail: email, name: name, buName: "", supervisorName: "", records: {} };
+    return { internEmail: email, name: name, buName: "", supervisorName: "", periodStart: "", periodEnd: "", records: {} };
+  }
+
+  function fetchCheckinDoc(email, year, month) {
+    return db.collection("checkins").doc(checkinDocId(email, year, month)).get()
+      .then(function (doc) { return doc.exists ? doc.data() : null; });
   }
 
   function loadCheckinDoc(email, name, year, month) {
-    return db.collection("checkins").doc(checkinDocId(email, year, month)).get()
-      .then(function (doc) {
-        return doc.exists ? doc.data() : emptyCheckinData(email, name);
-      });
+    return fetchCheckinDoc(email, year, month).then(function (data) {
+      return data || emptyCheckinData(email, name);
+    });
+  }
+
+  function resolvePeriodEnd(docData, year, month) {
+    return (docData && docData.periodEnd) || defaultPeriodEnd(year, month);
+  }
+
+  function resolvePeriodStart(email, docData, year, month) {
+    if (docData && docData.periodStart) return Promise.resolve(docData.periodStart);
+    var py = month === 1 ? year - 1 : year;
+    var pm = month === 1 ? 12 : month - 1;
+    return fetchCheckinDoc(email, py, pm).then(function (prevDoc) {
+      var prevEnd = resolvePeriodEnd(prevDoc, py, pm);
+      return addDaysISO(prevEnd, 1);
+    });
+  }
+
+  function resolvePeriod(email, docData, year, month) {
+    return resolvePeriodStart(email, docData, year, month).then(function (start) {
+      return { start: start, end: resolvePeriodEnd(docData, year, month) };
+    });
   }
 
   function saveCheckinDoc() {
@@ -152,6 +133,8 @@
       name: state.viewingName,
       buName: state.buName || "",
       supervisorName: state.supervisorName || "",
+      periodStart: state.periodStart || "",
+      periodEnd: state.periodEnd || "",
       records: state.records
     };
     return db.collection("checkins").doc(checkinDocId(state.viewingEmail, state.year, state.month)).set(data);
@@ -490,17 +473,16 @@
 
   function refreshMonthData() {
     if (!state.viewingEmail) return Promise.resolve();
-    return Promise.all([
-      resolvePeriod(state.year, state.month),
-      loadCheckinDoc(state.viewingEmail, state.viewingName, state.year, state.month)
-    ]).then(function (results) {
-      state.periodStart = results[0].start;
-      state.periodEnd = results[0].end;
-      var doc = results[1];
-      state.records = doc.records || {};
-      state.buName = doc.buName || "";
-      state.supervisorName = doc.supervisorName || "";
-    });
+    return loadCheckinDoc(state.viewingEmail, state.viewingName, state.year, state.month)
+      .then(function (doc) {
+        state.records = doc.records || {};
+        state.buName = doc.buName || "";
+        state.supervisorName = doc.supervisorName || "";
+        return resolvePeriod(state.viewingEmail, doc, state.year, state.month);
+      }).then(function (period) {
+        state.periodStart = period.start;
+        state.periodEnd = period.end;
+      });
   }
 
   // ---------- month management ----------
@@ -721,8 +703,6 @@
       + '<span class="month-range">（' + formatPeriodRange(state.periodStart, state.periodEnd) + '）</span>';
     periodStartInput.value = state.periodStart;
     periodEndInput.value = state.periodEnd;
-    periodStartInput.disabled = state.user.role !== "hr";
-    periodEndInput.disabled = state.user.role !== "hr";
     supervisorInput.value = state.supervisorName || "";
     buInput.value = state.buName || "";
     renderClockCard();
@@ -804,10 +784,8 @@
       periodStartInput.value = state.periodStart;
       return;
     }
-    savePeriodOverride(state.year, state.month, "periodStart", periodStartInput.value).then(function () {
-      state.periodStart = periodStartInput.value;
-      render();
-    });
+    state.periodStart = periodStartInput.value;
+    saveCheckinDoc().then(render);
   });
   periodEndInput.addEventListener("change", function () {
     if (periodEndInput.value < state.periodStart) {
@@ -815,9 +793,7 @@
       periodEndInput.value = state.periodEnd;
       return;
     }
-    savePeriodOverride(state.year, state.month, "periodEnd", periodEndInput.value).then(function () {
-      state.periodEnd = periodEndInput.value;
-      render();
-    });
+    state.periodEnd = periodEndInput.value;
+    saveCheckinDoc().then(render);
   });
 })();
